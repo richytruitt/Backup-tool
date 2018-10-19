@@ -62,4 +62,4 @@ temp_backup_dir=<directory to collect files in>
 
 ## 4. Run backup.py under Backup-tool/backup/backup.py
 
-Running this is going to generate a zip archive inside the directory you listed as temp_backup_dir in backup.ini. The zip archive will get sent to the SFTP server and available to view from http://<ip of Apache server>/backups
+Running this is going to generate a zip archive inside the directory you listed as temp_backup_dir in backup.ini. The zip archive will get sent to the SFTP server and available to view from http://__ip of SFTP machine__ /backups
