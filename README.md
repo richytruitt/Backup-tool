@@ -13,7 +13,8 @@ $ sudo apt-get install ansible
 ```
 
 
-## Before running the script
+## 1. Modify the Ansible script under Backup-tool/Backup_provision/playbooks/sftp.yml
+      
 Before running the script you must modify playbooks/sftp.yml. You will need to change the parameter for
 
 ```
@@ -24,9 +25,10 @@ vars:
    ansible_user: root
 ```
 
-Before running this script you must also make sure that you have ssh'd into the SFTO server to make sure the host machines fingerprint is on the SFTP server prior to running. 
+Before running this script you must also make sure that you have ssh'd into the SFTP server to make sure the host machines fingerprint is on the SFTP server prior to running. 
 
-## Running the Script
+## 2. Run generate.py under Backup-tool/Backup_provision/generate.py
+      
 To run this script you will need three parameters. 
 1. Username (Desired login username)
 2. Password (desired login password)
