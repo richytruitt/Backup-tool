@@ -1,0 +1,64 @@
+---
+- hosts: sftp-server
+  become: true
+
+  vars:
+    ansible_port: 22
+    ansible_ssh_pass: gatelink
+    ansible_become_pass: gatelink
+    ansible_user: root
+
+  tasks:
+  - name: Install httpd
+    yum:
+      name: httpd
+      state: latest
+
+  - name: Allow apache through firewall
+    command: firewall-cmd --permanent --add-port=80/tcp
+
+  - name: Allow apache through firewall
+    command: firewall-cmd --permanent --add-port=443/tcp
+
+  - name: Allow apache through firewall
+    command: firewall-cmd --reload
+    
+  - name: Add user "{{ sftp_user }}" to the machine
+    user:
+      name="{{ sftp_user }}"
+      password="{{sftp_password |password_hash('sha512') }}"
+      state=present
+      groups="root"
+
+  - name: Add user ssh to the machine
+    user:
+      name=ssh
+      password='sshpass'
+      state=present
+      groups="root"
+
+  - name: Ensure /backups directory exists
+    file: path="/var/www/html/backups" state=directory   
+
+  - name: Copy sshd_conf file over to machine
+    copy:
+      src: "{{ conf_file }}"
+      dest: "/etc/ssh/"
+
+  - name: ensure ssh Service is Running
+    systemd:
+      name: sshd.service
+      state: restarted
+      enabled: True
+
+  - name: ensure httpd Service is Running
+    systemd:
+      name: httpd.service
+      state: restarted
+      enabled: True
+  
+  - name: Make sure directory is owned by {{ sftp_user}}
+    command: chown {{ sftp_user}}:{{ sftp_user}} /var/www/html/backups
+
+ 
+  

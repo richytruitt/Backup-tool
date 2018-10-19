@@ -1,0 +1,7 @@
+[all:vars]
+sftp_user={{ username }}
+sftp_password={{ password }}
+conf_file=../cots/sshd_config
+
+[sftp-server]
+'{{ ip }}'
