@@ -4,8 +4,8 @@
 
   vars:
     ansible_port: 22
-    ansible_ssh_pass: gatelink
-    ansible_become_pass: gatelink
+    ansible_ssh_pass: <root password>
+    ansible_become_pass: <root password>
     ansible_user: root
 
   tasks:
