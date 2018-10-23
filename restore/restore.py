@@ -28,9 +28,14 @@ import zipfile
 
 def _perform_extraction(conf, zf, stagepath):
     """
-    Iterate over every configuration section's options.  The options are the
-    top-level folders in the zip file, and the values of those options are the
-    top-level destination folders on the filesystem.
+    Given a zip file and a configuration, iterate over all the sections
+    of the configuration and use the opstions and option values to determine
+    1. What files to extract from the zip
+    2. Where to move the extracted files
+
+    @param conf         : ConfigParser object
+    @param zf           : zipfile.ZipFile object
+    @param stagepath    : directory path for extracted file staging
     """
     zf_namelist = zf.namelist()
     for src, dst in [(opt, conf.get(sec, opt)) for sec in conf.sections() for opt in conf.options(sec)]:
@@ -47,7 +52,6 @@ def _perform_extraction(conf, zf, stagepath):
             
             # Build the final directory and filename path
             finalstage = os.path.join(stagepath, z)
-            #print("Source: {}, Dest: {}".format(src, dst))
             finalpath = os.path.join(z.replace(src, dst, 1))
             finaldir = os.path.dirname(finalpath)
             #print("Final Stage Path: {}\nFinal Path: {}\nFinal Dir: {}".format(finalstage, finalpath, finaldir))
@@ -62,7 +66,7 @@ def _perform_extraction(conf, zf, stagepath):
                 shutil.move(os.path.join(stagepath, z), finalpath)
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description="restore.py")
+    parser = argparse.ArgumentParser(description="Restore files and folders.")
     parser.add_argument("ifile", help="Path to .ini file")
     parser.add_argument("zfile", help="Path to .zip file")
     
@@ -76,8 +80,6 @@ if __name__ == '__main__':
     #print("{}".format(zf.namelist()))
     
     tmpdir = tempfile.mkdtemp()
-
     _perform_extraction(cp, zf, tmpdir)
-            
-    shutil.rmtree(tmpdir)
+    shutil.rmtree(tmpdir)   # os.rmdir() does not remove non-empty directories...
             
