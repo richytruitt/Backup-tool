@@ -39,31 +39,35 @@ def _perform_extraction(conf, zf, stagepath):
     """
     zf_namelist = zf.namelist()
     for src, dst in [(opt, conf.get(sec, opt)) for sec in conf.sections() for opt in conf.options(sec)]:
+    
+        srcdir = os.path.dirname(src)
+        srcname = os.path.basename(src)
         
-        # Iterate over each entry in the zipfile's list of names
-        for z in [zf_entry for zf_entry in zf_namelist if zf_entry.lower().startswith(src.lower())]:
+        dstdir = os.path.dirname(dst)
+        dstname = os.path.basename(dst)
 
-            zdir = os.path.dirname(z)
-            zname = os.path.basename(z)
-        
+        for zf_name in [z for z in zf_namelist if z.startswith(src) and not z.endswith("/")]:
+            #print("zipfile entry: {}".format(zf_name))
+            zdir = os.path.dirname(zf_name)
+            zname = os.path.basename(zf_name)
+
+            extractpath = os.path.join(stagepath, zf_name)
+
             # Extract to staging directory
-            print("Extracting {} to {} ... ".format(z, stagepath))
-            zf.extract(z, path=stagepath)
+            print("Extracting to {}".format(extractpath))
+            zf.extract(zf_name, path=stagepath)
+
+            # Create final directory/directories  
+            movepath = os.path.join(zf_name.replace(src, dst, 1))
+            movedir = os.path.dirname(movepath)
+            if len(movedir) > 0 and not os.path.isdir(movedir):
+                #print("Making folders: {}".format(os.path.dirname(movepath)))
+                os.makedirs(movedir)
+
+            # Move to final directory
+            print(" - Moving: {} -> {}".format(extractpath, movepath))
+            shutil.move(extractpath, movepath)
             
-            # Build the final directory and filename path
-            finalstage = os.path.join(stagepath, z)
-            finalpath = os.path.join(zdir.replace(src, dst, 1), zname)
-            finaldir = os.path.dirname(finalpath)
-            #print("Final Stage Path: {}\nFinal Path: {}\nFinal Dir: {}".format(finalstage, finalpath, finaldir))
-            
-            if len(finaldir) > 0 and not os.path.exists(finaldir):
-                print("\t... Making folder(s): {}".format(finaldir))
-                os.makedirs(finaldir)
-                
-            # Only want to move files
-            if os.path.isfile(os.path.join(stagepath, z)):
-                print("\t-- Moving {} -> {}".format(finalstage, finalpath))
-                shutil.move(os.path.join(stagepath, z), finalpath)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Restore files and folders.")
