@@ -52,7 +52,7 @@ def _perform_extraction(conf, zf, stagepath):
             
             # Build the final directory and filename path
             finalstage = os.path.join(stagepath, z)
-            finalpath = os.path.join(z.replace(src, dst, 1))
+            finalpath = os.path.join(zdir.replace(src, dst, 1), zname)
             finaldir = os.path.dirname(finalpath)
             #print("Final Stage Path: {}\nFinal Path: {}\nFinal Dir: {}".format(finalstage, finalpath, finaldir))
             
