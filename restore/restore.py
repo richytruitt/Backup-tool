@@ -13,54 +13,53 @@
 #    [restore]
 #    test_reqs.txt = test_reqs.txt
 #    ws_test/funkybomb_test.py = ws_test/funkybomb_test.py
-#    test_dir/ = test_dir_restored
-#
-#  ** Make sure to put a trailing slash in the option name if it is a directory! **
-#
+#    test_dir = test_dir_restored
 #
 import argparse
-import configparser
+try:
+    import configparser
+except:
+    import ConfigParser as configparser
 import os
 import shutil
 import tempfile
 import zipfile
 
-# tempfile.TemporaryDirectory() is only a python3.2+ function, so need to check
-# what we're running as.  Determines whether we use a closure or have to
-# manually delete temporary directories.
-if hasattr(tempfile, "TemporaryDirectory"):
-    USE_CLOSURE = True
-else:
-    USE_CLOSURE = False
-    
+
 def _perform_extraction(conf, zf, stagepath):
-    """ 
-    Given a zip file and a configuration, iterate over all the sections
-    of the configuration and use the options and option values to determine
-    1. What files to extract from the zip
-    2. Where to move the extracted files
-    
-    @param conf         : ConfigParser object
-    @param zf           : zipfile object
-    @param stagepath    : directory path for extracted file staging
+    """
+    Iterate over every configuration section's options.  The options are the
+    top-level folders in the zip file, and the values of those options are the
+    top-level destination folders on the filesystem.
     """
     zf_namelist = zf.namelist()
     for src, dst in [(opt, conf.get(sec, opt)) for sec in conf.sections() for opt in conf.options(sec)]:
-        targets = [z for z in zf_namelist if z.startswith(src)]
-        if len(targets) > 1:
-            for zf_entry in targets:
-                #print("Extracting {} ...".format(zf_entry))
-                zf.extract(zf_entry, path=stagepath)
-                #print("  - Config Source: {}".format(src))
-                #print("  - Destination Path: {}".format(dst))
-                #print("  - Zipfile path: {}".format(zf_entry))
-                #print("  - Zipfile path adjusted: {}".format(zf_entry.replace(src, "", 1)))
-                #print("  -> {}\n  -> {}".format(os.path.join(stagepath, zf_entry), os.path.join(dst, zf_entry.replace(src, "", 1))))
-                shutil.move(os.path.join(stagepath, zf_entry), os.path.join(dst, zf_entry.replace(src+"/", "", 1)))
-        else:
-            zf_entry = src
-            zf.extract(zf_entry, path=stagepath)
-            shutil.move(os.path.join(stagepath, zf_entry), dst)
+        
+        # Iterate over each entry in the zipfile's list of names
+        for z in [zf_entry for zf_entry in zf_namelist if zf_entry.lower().startswith(src.lower())]:
+
+            zdir = os.path.dirname(z)
+            zname = os.path.basename(z)
+        
+            # Extract to staging directory
+            print("Extracting {} to {} ... ".format(z, stagepath))
+            zf.extract(z, path=stagepath)
+            
+            # Build the final directory and filename path
+            finalstage = os.path.join(stagepath, z)
+            #print("Source: {}, Dest: {}".format(src, dst))
+            finalpath = os.path.join(z.replace(src, dst, 1))
+            finaldir = os.path.dirname(finalpath)
+            #print("Final Stage Path: {}\nFinal Path: {}\nFinal Dir: {}".format(finalstage, finalpath, finaldir))
+            
+            if len(finaldir) > 0 and not os.path.exists(finaldir):
+                print("\t... Making folder(s): {}".format(finaldir))
+                os.makedirs(finaldir)
+                
+            # Only want to move files
+            if os.path.isfile(os.path.join(stagepath, z)):
+                print("\t-- Moving {} -> {}".format(finalstage, finalpath))
+                shutil.move(os.path.join(stagepath, z), finalpath)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="restore.py")
@@ -70,17 +69,15 @@ if __name__ == '__main__':
     args = parser.parse_args()
     
     cp = configparser.ConfigParser()
+    cp.optionxform = str    # This is needed so that ConfigParser keeps case of the sections!!
     cp.read(args.ifile)
     
     zf = zipfile.ZipFile(args.zfile)
     #print("{}".format(zf.namelist()))
     
-    if USE_CLOSURE:
-        with tempfile.TemporaryDirectory() as tmpdirname:
-            _perform_extraction(cp, zf, tmpdirname)
-    else:
-        tmpdirname = tempfile.mkdtemp()
-        _perform_extraction(cp, zf, tmpdirname)
-        print("Removing {}".format(tmpdirname))
-        shutil.rmtree(tmpdirname) # os.rmdir() does not remove non-empty directories...
-    
+    tmpdir = tempfile.mkdtemp()
+
+    _perform_extraction(cp, zf, tmpdir)
+            
+    shutil.rmtree(tmpdir)
+            
