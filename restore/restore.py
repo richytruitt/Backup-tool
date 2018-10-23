@@ -12,7 +12,7 @@
 # Example Entries (one toplevel file, one nested file, one directory)
 #    [restore]
 #    test_reqs.txt = test_reqs.txt
-#    ws_test/funkybomb_test.py = ws_test/funkybomb_test.py
+#    ws_test/funkybomb_test.py = ws_test_restored/funkybomb_test.py
 #    test_dir = test_dir_restored
 #
 import argparse
